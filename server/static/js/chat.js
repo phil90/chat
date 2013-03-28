@@ -1,54 +1,45 @@
-			var socket = io.connect('http://localhost:8081');
-			var currentUsername;
+var socket = io.connect('http://localhost:8081/');
 
-			// on connection to server, ask for user's name with an anonymous callback
-			socket.on('connect', function() {
-				// call the server-side function 'adduser' and send one parameter (value of prompt)
-				if(!currentUsername) {
-					currentUsername = prompt("What's your name?");
-				}
-				socket.emit('adduser', currentUsername);
-			});
+socket.on('connect', function() {
+	console.log('socket ready');
+	
+	
+	socket.emit('adduser', 'phil');
+	
+})
 
-			// listener, whenever the server emits 'updatechat', this updates the chat body
-			socket.on('updatechat', function(username, data) {
-			
-				// $('#conversation').prepend('<b>' + username + ':</b> ' + data + '<br>');
-				if(currentUsername == username) {
-					var html = '<dt class="self">' + username + '</dt><dd>' + data + '<dd>';
-				} else {
-					var html = '<dt>' + username + '</dt><dd>' + data + '<dd>';
-				}
 
-				$('#conversation').prepend(html);
-			});
+socket.on('updateusers', function(data) {
+	
+	console.log(data);
+	$.each(data, function(key, value){
+		$('#users').append('<li>'+ key +'<li>')})
+});
 
-			// listener, whenever the server emits 'updateusers', this updates the username list
-			socket.on('updateusers', function(data) {
-				$('#users').empty();
-				$.each(data, function(key, value) {
-					$('#users').append('<li>' + key + '</li>');
-				});
-			});
+socket.on('updatechat', function(username, data) {
+	
+	var html = '<dt>' + username + '</dt><dd>' + data + '</dd>';
+	
+	$('#conversation').prepend(html);
+	
+});
 
-			// on load of page
-			$(function() {
-				// when the client clicks SEND
-				$('#datasend').click(function() {
-					var message = $('#data').val();
-					$('#data').val('');
-					// tell server to execute 'sendchat' and send along one parameter
-					if(message.length > 0) {
-						socket.emit('sendchat', message);
-					}
-				});
+$(function() {
+	$('#datasend').click(function() {
+		var message = $('#data').val();
+		$('#data').val('');
+		if (message.length > 0) {
+			socket.emit('sendchat', message);
+		}
+		
+	});
+	
+	$('#data').keypress(function(e) {
+		if(e.keyCode == 13) {
+			$(this).blur();
+			$('#datasend').focus().click();
+			$('#data').focus().click();
+		}
+	});
+})
 
-				// when the client hits ENTER on their keyboard
-				$('#data').keypress(function(e) {
-					if (e.which == 13) {
-						$(this).blur();
-						$('#datasend').focus().click();
-						$('#data').focus().click();
-					}
-				});
-			});
